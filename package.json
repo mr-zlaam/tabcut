@@ -7,6 +7,9 @@
   "bin": {
     "tabcut": "./index.ts"
   },
+  "scripts": {
+    "build": "bun build index.ts --compile --outfile tabcut"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
