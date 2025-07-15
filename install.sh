@@ -2,22 +2,29 @@
 set -e
 
 BINARY_NAME="tabcut"
-BINARY_RUN="tabcut create"
 INSTALL_PATH="/usr/local/bin/$BINARY_NAME"
 
 echo "📦 Installing $BINARY_NAME..."
 
-# Check if binary exists
-if [ ! -f "$BINARY_NAME" ]; then
+# Ensure we're in the directory where the binary exists
+if [ ! -f "./$BINARY_NAME" ]; then
   echo "❌ Error: '$BINARY_NAME' binary not found in current directory."
   exit 1
 fi
 
-# Copy binary to /usr/local/bin
-echo "🔧 Copying binary to $INSTALL_PATH (requires sudo)"
-sudo cp "$BINARY_NAME" "$INSTALL_PATH"
-sudo chmod +x "$INSTALL_PATH"
+# Ensure binary is executable before copying
+chmod +x "./$BINARY_NAME"
 
-# Confirm
-echo "✅ $BINARY_NAME installed successfully!"
-echo "💡 Run it using: $BINARY_RUN"
+# Copy binary to system path
+echo "🔧 Copying to $INSTALL_PATH (requires sudo)..."
+sudo cp "./$BINARY_NAME" "$INSTALL_PATH"
+sudo chmod 755 "$INSTALL_PATH"
+
+# Check if successfully installed
+if [ -x "$INSTALL_PATH" ]; then
+  echo "✅ $BINARY_NAME installed successfully!"
+  echo "💡 Run it using: ${BINARY_NAME} create"
+else
+  echo "❌ Installation failed. Please check permissions."
+  exit 1
+fi
