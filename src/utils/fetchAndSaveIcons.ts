@@ -7,7 +7,7 @@ import { createWriteStream } from "fs";
 import chalk from "chalk";
 
 const HOME = process.env.HOME || "~";
-const ICON_DIR = path.join(HOME, ".local", "share", "webapps", "icons");
+const ICON_DIR = path.join(HOME, ".local", "share", "tabcut", "icons");
 
 export async function fetchFavicon(siteUrl: string, slug: string): Promise<string | null> {
   try {

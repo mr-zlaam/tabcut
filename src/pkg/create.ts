@@ -72,7 +72,7 @@ export const CreateTabCut = async () => {
   });
 
   const useCustomIcon = await confirm({
-    message: chalk.yellow("🖼️  Do you want to provide a custom PNG icon?"),
+    message: chalk.yellow("🖼️  Do you have a custom PNG icon?"),
   });
 
   const slug = slugify(applicationName, { lower: true, strict: true });

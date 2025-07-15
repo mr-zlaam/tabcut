@@ -5,7 +5,7 @@ import os from "os";
 import path from "path";
 import { checkbox } from "@inquirer/prompts";
 
-const ICON_DIR = path.join(os.homedir(), ".local", "share", "webapps", "icons");
+const ICON_DIR = path.join(os.homedir(), ".local", "share", "tabcut", "icons");
 
 export async function removeTabcutApps() {
   const apps = getTabcutApps();
