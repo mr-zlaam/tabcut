@@ -22,7 +22,7 @@ const retryPrompt = async <T>(
   }
 };
 
-export const GetAnswers = async () => {
+export const CreateTabCut = async () => {
   const nameSchema = z.string().min(1);
   const categorySchema = z.string().min(1);
   const urlSchema = z.url();
@@ -96,7 +96,7 @@ export const GetAnswers = async () => {
 
   await createDesktopEntry({
     name: applicationName,
-    slug: generateSlug(applicationName) + randomUUIDv7().split("-")[0],
+    slug: `mr-zlaam-${generateSlug(applicationName) + randomUUIDv7().split("-")[0]}`,
     url,
     category,
     browserCmd: browser,

@@ -1,8 +1,12 @@
 {
-  "name": "webapps",
+  "name": "tabcut",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "version": "1.0.0",
+  "bin": {
+    "tabcut": "./index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
