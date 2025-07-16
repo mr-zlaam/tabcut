@@ -9,6 +9,7 @@ import { createDesktopEntry } from "../utils/createDesktopEntry";
 import slugify from "slugify";
 import fs from "fs";
 import { generateSlug } from "../utils/slugStringGeneratorUtils";
+import ora from "ora";
 
 const retryPrompt = async <T>(
   promptFn: () => Promise<T>,
@@ -18,7 +19,13 @@ const retryPrompt = async <T>(
     const result = await promptFn();
     const validation = validate(result);
     if (validation === true) return result;
-    console.log(chalk.red(typeof validation === "string" ? validation : "❌ Invalid input. Try again."));
+    console.log(
+      chalk.red(
+        typeof validation === "string"
+          ? validation
+          : "❌ Invalid input. Try again."
+      )
+    );
   }
 };
 
@@ -41,8 +48,12 @@ export const CreateTabCut = async () => {
   );
 
   const category = await retryPrompt(
-    () => input({ message: chalk.cyan("🗂️  Enter categories your application falls in:") }),
-    (value) => categorySchema.safeParse(value).success || "❌ Category cannot be empty."
+    () =>
+      input({
+        message: chalk.cyan("🗂️  Enter categories your application falls in:"),
+      }),
+    (value) =>
+      categorySchema.safeParse(value).success || "❌ Category cannot be empty."
   );
 
   const detected = await detectInstalledBrowsers();
@@ -60,7 +71,9 @@ export const CreateTabCut = async () => {
   });
 
   const customParams = await input({
-    message: chalk.cyan("⚙️  Enter any custom launch parameters (or leave blank):"),
+    message: chalk.cyan(
+      "⚙️  Enter any custom launch parameters (or leave blank):"
+    ),
   });
 
   const isIsolatedProfile = await confirm({
@@ -80,31 +93,73 @@ export const CreateTabCut = async () => {
 
   if (useCustomIcon) {
     iconPath = await retryPrompt(
-      () => input({ message: chalk.cyan("📁 Enter full path to your .png icon:") }),
+      () =>
+        input({ message: chalk.cyan("📁 Enter full path to your .png icon:") }),
       (val) =>
         fs.existsSync(val) && val.endsWith(".png")
           ? true
           : "❌ File must exist and be a .png image."
     );
   } else {
-    iconPath = await fetchFavicon(url, slug);
+    const spinner = ora("🎨 Fetching favicon...").start();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+
+    try {
+      iconPath = await fetchFavicon(url, slug, controller);
+    } catch {
+      iconPath = null;
+    } finally {
+      clearTimeout(timeout);
+      spinner.stop();
+    }
+
     if (!iconPath) {
-      console.log(chalk.red("❌ Could not fetch icon. Please use custom PNG."));
-      process.exit(1);
+      console.log(chalk.yellow("⚠️ Sorry, we couldn't fetch the icon."));
+      const wantsToGiveIcon = await confirm({
+        message: chalk.cyan(
+          "🖼️  Want to give icon path yourself? (press Enter to skip)"
+        ),
+        default: false,
+      });
+
+      if (wantsToGiveIcon) {
+        iconPath = await retryPrompt(
+          () =>
+            input({
+              message: chalk.cyan("📁 Enter full path to your .png icon:"),
+            }),
+          (val) =>
+            fs.existsSync(val) && val.endsWith(".png")
+              ? true
+              : "❌ File must exist and be a .png image."
+        );
+      } else {
+        iconPath = null;
+        console.log(
+          chalk.yellow("📦 Continuing without icon. You can update it later.")
+        );
+      }
     }
   }
 
-  await createDesktopEntry({
-    name: applicationName,
-    slug: `mr-zlaam-${generateSlug(applicationName) + randomUUIDv7().split("-")[0]}`,
-    url,
-    category,
-    browserCmd: browser,
-    iconPath,
-    private: privateMode,
-    isolated: isIsolatedProfile,
-    customParams,
-  });
+  try {
+    await createDesktopEntry({
+      name: applicationName,
+      slug: `mr-zlaam-${
+        generateSlug(applicationName) + randomUUIDv7().split("-")[0]
+      }`,
+      url,
+      category,
+      browserCmd: browser,
+      iconPath: iconPath || "",
+      private: privateMode,
+      isolated: isIsolatedProfile,
+      customParams,
+    });
+  } catch (err) {
+    console.log(chalk.red("⚠️ Failed to copy icon, but continuing..."));
+  }
 
   console.log(chalk.green("✅ Webapp created successfully!"));
 };

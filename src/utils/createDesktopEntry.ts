@@ -1,5 +1,3 @@
-
-
 import fs, { copyFileSync } from "fs";
 import path from "path";
 import chalk from "chalk";
@@ -28,15 +26,27 @@ export async function createDesktopEntry(options: DesktopEntryOptions) {
 
   // Define icon target path
   const finalIconPath = path.join(ICON_DIR, `${options.slug}.png`);
-  if (path.resolve(options.iconPath) !== path.resolve(finalIconPath)) {
-    try {
-      copyFileSync(options.iconPath, finalIconPath);
-    } catch (e) {
-      console.log(chalk.red("❌ Failed to copy icon file:"), e);
+  let iconEntry = "";
+
+  if (options.iconPath && fs.existsSync(options.iconPath)) {
+    if (path.resolve(options.iconPath) !== path.resolve(finalIconPath)) {
+      try {
+        copyFileSync(options.iconPath, finalIconPath);
+        iconEntry = finalIconPath;
+      } catch {
+        console.log(
+          chalk.yellow("⚠️ Could not copy icon file. Continuing without it.")
+        );
+      }
+    } else {
+      iconEntry = finalIconPath;
     }
   }
 
-  const desktopFilePath = path.join(APPLICATIONS_DIR, `${options.slug}.desktop`);
+  const desktopFilePath = path.join(
+    APPLICATIONS_DIR,
+    `${options.slug}.desktop`
+  );
   const wmClass = `WebApp-${options.slug}`;
   const execCommand = [
     options.browserCmd,
@@ -46,6 +56,7 @@ export async function createDesktopEntry(options: DesktopEntryOptions) {
   ];
 
   if (options.private) execCommand.push("--incognito");
+
   if (options.isolated) {
     const profilePath = path.join(HOME, `.config/webapps/${options.slug}`);
     execCommand.push(`--user-data-dir=${profilePath}`);
@@ -62,7 +73,7 @@ Exec=${execCommand.join(" ")}
 Terminal=false
 X-MultipleArgs=false
 Type=Application
-Icon=${finalIconPath}
+Icon=${iconEntry}
 Categories=GTK;WebApps;${options.category};
 MimeType=text/html;text/xml;application/xhtml_xml;
 StartupWMClass=${wmClass}
@@ -77,5 +88,8 @@ X-WebApp-Isolated=${options.isolated}
 
   fs.writeFileSync(desktopFilePath, entryContent, { mode: 0o755 });
 
-  console.log(chalk.green(`✅ .desktop file created at:`), chalk.bold(desktopFilePath));
+  console.log(
+    chalk.green(`✅ .desktop file created at:`),
+    chalk.bold(desktopFilePath)
+  );
 }
