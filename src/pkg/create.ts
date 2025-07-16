@@ -2,14 +2,15 @@ import { confirm, input, rawlist } from "@inquirer/prompts";
 import { randomUUIDv7 } from "bun";
 import chalk from "chalk";
 import { z } from "zod";
+import fs from "fs";
+import ora from "ora";
+import slugify from "slugify";
+
 import { isValidUrl } from "../utils/checkValidUrl";
 import { detectInstalledBrowsers } from "../utils/detectBrowsers";
-import { fetchFavicon } from "../utils/fetchAndSaveIcons";
+import { fetchFavicon, downloadIconFromUrl } from "../utils/fetchAndSaveIcons";
 import { createDesktopEntry } from "../utils/createDesktopEntry";
-import slugify from "slugify";
-import fs from "fs";
 import { generateSlug } from "../utils/slugStringGeneratorUtils";
-import ora from "ora";
 
 const retryPrompt = async <T>(
   promptFn: () => Promise<T>,
@@ -116,28 +117,55 @@ export const CreateTabCut = async () => {
 
     if (!iconPath) {
       console.log(chalk.yellow("⚠️ Sorry, we couldn't fetch the icon."));
-      const wantsToGiveIcon = await confirm({
-        message: chalk.cyan(
-          "🖼️  Want to give icon path yourself? (press Enter to skip)"
-        ),
+
+      // 🧭 Ask for online image URL
+      const wantsOnlineIcon = await confirm({
+        message: chalk.cyan("🌐 Do you want to provide an online icon URL?"),
         default: false,
       });
 
-      if (wantsToGiveIcon) {
-        iconPath = await retryPrompt(
-          () =>
-            input({
-              message: chalk.cyan("📁 Enter full path to your .png icon:"),
-            }),
+      if (wantsOnlineIcon) {
+        const onlineIconUrl = await retryPrompt(
+          () => input({ message: chalk.cyan("🔗 Enter direct image URL:") }),
           (val) =>
-            fs.existsSync(val) && val.endsWith(".png")
+            val.startsWith("http") && val.endsWith(".png")
               ? true
-              : "❌ File must exist and be a .png image."
+              : "❌ Must be a valid .png image URL."
         );
-      } else {
-        iconPath = null;
+
+        const downloaded = await downloadIconFromUrl(onlineIconUrl, slug);
+        if (downloaded) {
+          iconPath = downloaded;
+        } else {
+          console.log(chalk.red("❌ Failed to download icon from URL."));
+        }
+      }
+
+      // 🖼️ Ask for local icon as fallback
+      if (!iconPath) {
+        const wantsLocalIcon = await confirm({
+          message: chalk.cyan("📁 Provide local .png icon path instead?"),
+          default: false,
+        });
+
+        if (wantsLocalIcon) {
+          iconPath = await retryPrompt(
+            () =>
+              input({
+                message: chalk.cyan("📁 Enter full path to your .png icon:"),
+              }),
+            (val) =>
+              fs.existsSync(val) && val.endsWith(".png")
+                ? true
+                : "❌ File must exist and be a .png image."
+          );
+        }
+      }
+
+      // ❌ Final fallback
+      if (!iconPath) {
         console.log(
-          chalk.yellow("📦 Continuing without icon. You can update it later.")
+          chalk.yellow("📦 No icon provided. Creating webapp without icon.")
         );
       }
     }
