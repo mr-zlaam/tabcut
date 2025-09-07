@@ -1,22 +1,28 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
 BINARY_NAME="tabcut"
 RELEASE_URL="https://github.com/mr-zlaam/tabcut/releases/download/tabcut/tabcut-linux-x64.tar.gz"
 TMP_DIR=$(mktemp -d)
 
-echo "📦 Downloading $BINARY_NAME..."
-wget -qO "$TMP_DIR/${BINARY_NAME}.tar.gz" "$RELEASE_URL"
+cleanup() { rm -rf "$TMP_DIR"; }
+trap cleanup EXIT
 
-echo "📂 Extracting..."
-tar -xzf "$TMP_DIR/${BINARY_NAME}.tar.gz" -C "$TMP_DIR"
+echo "Downloading $BINARY_NAME..."
+curl -# -L "$RELEASE_URL" -o "$TMP_DIR/${BINARY_NAME}.tar.gz"
 
-cd "$TMP_DIR/tabcut"
+echo "Extracting..."
+tar -xvzf "$TMP_DIR/${BINARY_NAME}.tar.gz" -C "$TMP_DIR"
 
-echo "⚙️ Running install.sh..."
+INSTALLER_PATH=$(find "$TMP_DIR" -maxdepth 3 -type f -name install.sh -print -quit || true)
+
+if [ -z "$INSTALLER_PATH" ]; then
+  echo "Error: install.sh not found inside archive."
+  exit 1
+fi
+
+INSTALL_DIR=$(dirname "$INSTALLER_PATH")
+echo "Running installer..."
+cd "$INSTALL_DIR"
 chmod +x ./install.sh
 ./install.sh
-
-echo "🧹 Cleaning up..."
-rm -rf "$TMP_DIR"
-!tabcut-install.sh
