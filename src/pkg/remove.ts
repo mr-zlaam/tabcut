@@ -50,7 +50,7 @@ export async function removeTabcutApps() {
         }
       }
 
-      console.log(chalk.green(`✅ Removed: ${app.name}`));
+      console.log(chalk.green(`✔ Removed: ${app.name}`));
     } catch (err) {
       console.log(chalk.red(`❌ Failed to remove ${app.name}: ${err}`));
     }

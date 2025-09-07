@@ -39,3 +39,5 @@ export const browserExecutables = [
   "surf",
   "nyxt",
 ];
+
+export const allowedExtensions = [".png", ".svg", ".jpeg", ".jpg"];
