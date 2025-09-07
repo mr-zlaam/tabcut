@@ -88,8 +88,4 @@ X-WebApp-Isolated=${options.isolated}
 
   fs.writeFileSync(desktopFilePath, entryContent, { mode: 0o755 });
 
-  console.log(
-    chalk.green(`✅ .desktop file created at:`),
-    chalk.bold(desktopFilePath)
-  );
 }
