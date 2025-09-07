@@ -25,7 +25,7 @@ tabcut lets you convert any website into a native `.desktop` launcher on your Li
 ### Method 1: One-liner (recommended)
 
 ```bash
-sh <(curl -fsSL https://raw.githubusercontent.com/mr-zlaam/tabcut/main/tabcut-install.sh)
+curl -fsSL https://raw.githubusercontent.com/mr-zlaam/tabcut/main/tabcut-install.sh | sh
 ```
 
 This downloads the latest release tarball, extracts it into a temporary folder, runs the bundled installer, and moves the binary into `/usr/local/bin`.
